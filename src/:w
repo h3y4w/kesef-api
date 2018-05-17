@@ -1,0 +1,148 @@
+<template>
+  <div id=stock_demo>
+
+
+  <v-layout column justify-center align-center>
+    <v-flex xs12 sm8 md6>
+      <v-card>
+        <v-card-title class="headline">{{stock.name}}</v-card-title>
+        <v-tabs fixed-tabs>
+          <v-tab @click="clickTab($event)"  v-for="tab in tabs" :key="tab.id" v-bind:id="tab.id"> 
+            {{tab.title}}
+          </v-tab>
+
+          <v-tab-item>
+            <v-card>
+              <v-card-text>
+                {{ stock }}
+              </v-card-text>
+            </v-card>
+          </v-tab-item>
+
+          <v-tab-item>
+            <v-card>
+              <div id="graphDiv" style="height: 250px; width:80vh">
+              </div>
+
+
+              <listingsTable>
+              </listingsTable>
+              <v-card-text>
+                High: {{ stock.high }}
+                <br>
+                Low: {{ stock.low }} 
+                <br>
+                Now: {{ stock.current }}
+              </v-card-text>
+            </v-card>
+          </v-tab-item>
+
+          <v-tab-item>
+            <v-card>
+              <v-card-text>
+                {{ stock.summary }}
+              </v-card-text>
+            </v-card>
+          </v-tab-item>
+
+        </v-tabs>
+      </v-card>
+    </v-flex>
+  </v-layout>
+  </div>
+</template>
+
+<script>
+import { fetchStock } from '@/api/stock'
+import { mapMutations } from 'vuex'
+import { mapGetters } from 'vuex'
+import listingsTable from './listingsTable'
+import { LineChart } from 'vue-morris'
+
+
+
+  export default {
+
+    components: {
+      listingsTable,
+      LineChart
+    },
+    data () {
+      return {
+        graphD: [
+          { label: 'year', stock: 120 },
+          { label: 'year', stock: 139 },
+          { label: 'year', stock: 154 }
+        ],
+        stock: {},
+        cTab: '',
+        tabs: [
+          {
+            title: 'Info',
+            id: 'info',
+            key: ''
+          },
+          {
+            title: 'Listings',
+            id: 'listings',
+            key: ''
+          },
+          {
+            title: 'Company',
+            id: 'company',
+            key: 'summary'
+          }
+        ],
+      }
+    },
+    validate ({params}) {
+      return /^\d+$/.test(params.id)
+    },
+    computed: {
+      summaryPage () {
+        return stock[summary]
+      }
+    },
+    methods : {
+      clickTab (event) {
+        console.log(event.target)
+//        this.cTab = tabId
+      }
+    },
+    updated: function() {
+      new Morris.Line({
+        element: 'graphDiv',
+        data: [
+          { year: 2017, value: 40 },
+          { year: 2018, value: 43 },
+          { year: 2019, value: 45 }
+        ],
+        xkey: 'year',
+        ykeys: ['value'],
+        labels: ['Price']
+      });
+
+    },
+    created: function() {
+
+
+
+      var params = {'id': this.$route.params.stockId}
+      var _this = this;
+      this.cTab = this.tabs[0].id
+
+      fetchStock(
+        params,
+        function(response) { //on successful data retrieval
+          //this.setStock(response.data.payload)
+          _this.stock = response.data.payload
+          console.log(response)
+        },
+        function(responseError) { //on error
+          console.log(responseError)
+        }
+      )
+    }
+  }
+</script>
+

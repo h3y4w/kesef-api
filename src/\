@@ -1,0 +1,207 @@
+<template>
+  <v-layout column justify-center align-center>
+    <v-flex xs12 sm8 md6>
+      <v-card>
+        <v-card-title class="headline">{{stock.name}}</v-card-title>
+        <v-tabs fixed-tabs>
+          <v-tab @click="clickTab($event)"  v-for="tab in tabs" :key="tab.id" v-bind:id="tab.id"> 
+            {{tab.title}}
+          </v-tab>
+
+          <v-tab-item>
+            <v-card>
+              <v-card-text>
+                {{ stock }}
+              </v-card-text>
+            </v-card>
+          </v-tab-item>
+
+          <v-tab-item>
+            <v-card>
+              <div id="graphDiv"  style="display:block; width:300px;">
+              </div>
+              <v-divider></v-divider>
+
+
+              <listingsTable>
+              </listingsTable>
+              <v-card-text>
+                More info here...
+              </v-card-text>
+            </v-card>
+          </v-tab-item>
+
+          <v-tab-item>
+            <v-card>
+              <v-card-text>
+                {{ stock.summary }}
+              </v-card-text>
+            </v-card>
+          </v-tab-item>
+
+        </v-tabs>
+      </v-card>
+    </v-flex>
+  </v-layout>
+</template>
+
+<script>
+import { fetchStock } from '@/api/stock'
+import { mapMutations } from 'vuex'
+import { mapGetters } from 'vuex'
+import listingsTable from './listingsTable'
+import { LineChart } from 'vue-morris'
+
+
+
+  export default {
+
+    components: {
+      listingsTable,
+      LineChart
+    },
+    data () {
+      return {
+        graphD: [
+          { label: 'year', stock: 120 },
+          { label: 'year', stock: 139 },
+          { label: 'year', stock: 154 }
+        ],
+        stock: {},
+        cTab: '',
+        tabs: [
+          {
+            title: 'Info',
+            id: 'info',
+            key: ''
+          },
+          {
+            title: 'Listings',
+            id: 'listings',
+            key: ''
+          },
+          {
+            title: 'Company',
+            id: 'company',
+            key: 'summary'
+          }
+        ],
+      }
+    },
+    validate ({params}) {
+      return /^\d+$/.test(params.id)
+    },
+    computed: {
+      summaryPage () {
+        return stock[summary]
+      }
+    },
+    methods : {
+      clickTab (event) {
+        console.log(event.target)
+//        this.cTab = tabId
+      }
+    },
+    updated: function() {
+      var _this = this;
+      var urlTab = _this.$route.query.tab;
+      _this.cTab = _this.tabs[0].id;
+
+      for(var i=0; i<_this.tabs.length; i++) {
+        if (_this.tabs[i].id == urlTab)
+          _this.cTab = urlTab;
+      }
+      console.log("tab: " + _this.cTab);
+       
+
+      /*
+      new Morris.Line({
+        element: 'graphDiv',
+        data: [
+          { year: 2017, value: 40 },
+          { year: 2018, value: 43 },
+          { year: 2019, value: 45 }
+        ],
+        xkey: 'year',
+        ykeys: ['value'],
+      });
+*/
+
+
+  google.charts.load('current', {packages: ['corechart', 'line']});
+  google.charts.setOnLoadCallback(drawBasic);
+
+  function drawBasic() {
+    //dynamically set size of graph based on parent dimensions and redraw when size changes
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('number', 'X');
+        data.addColumn('number', 'test');
+
+        data.addRows([
+          [0, 0],   [1, 10],  [2, 23],  [3, 17],  [4, 18],  [5, 9],
+          [6, 11],  [7, 27],  [8, 33],  [9, 40],  [10, 32], [11, 35],
+          [12, 30], [13, 40], [14, 42], [15, 47], [16, 44], [17, 48],
+          [18, 52], [19, 54], [20, 42], [21, 55], [22, 56], [23, 57],
+          [24, 60], [25, 50], [26, 52], [27, 51], [28, 49], [29, 53],
+          [30, 55], [31, 60], [32, 61], [33, 59], [34, 62], [35, 65],
+          [36, 62], [37, 58], [38, 55], [39, 61], [40, 64], [41, 65],
+          [42, 63], [43, 66], [44, 67], [45, 69], [46, 69], [47, 70],
+          [48, 72], [49, 68], [50, 66], [51, 65], [52, 67], [53, 70],
+          [54, 71], [55, 72], [56, 73], [57, 75], [58, 70], [59, 68],
+          [60, 64], [61, 60], [62, 65], [63, 67], [64, 68], [65, 69],
+          [66, 70], [67, 72], [68, 75], [69, 80]
+        ]);
+
+        var options = {
+          legend: {
+            position: 'none'
+          },
+          hAxis: {
+            textPosition: 'none'
+          },
+          vAxis: {
+            textPosition: 'none'
+          },
+          annotations: {
+            highContrast: false 
+          },
+          backgroundColor: 'transparent'
+        };
+
+
+        var chart = new google.visualization.LineChart(document.getElementById('graphDiv'));
+
+        var p = document.getElementbyId('graphDiv').parentNode;
+        console.log('width of parent: '+ p.width);
+        
+
+        chart.draw(data, options);
+      }
+
+
+
+    },
+    created: function() {
+
+
+
+      var params = {'id': this.$route.params.stockId}
+      var _this = this;
+      this.cTab = this.tabs[0].id
+
+      fetchStock(
+        params,
+        function(response) { //on successful data retrieval
+          //this.setStock(response.data.payload)
+          _this.stock = response.data.payload
+          console.log(response)
+        },
+        function(responseError) { //on error
+          console.log(responseError)
+        }
+      )
+    }
+  }
+</script>
+
